@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.AccessDeniedException;
 import ru.practicum.shareit.exception.NotFoundException;
@@ -13,6 +14,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
@@ -23,17 +25,11 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto addItem(Long userId, ItemDto itemDto) {
         User owner = userRepository.findById(userId);
         if (owner == null) {
-            throw new NotFoundException("User not found");
+            log.error("Owner not found");
+            throw new NotFoundException("Owner not found");
         }
 
-        Item item = new Item(
-                null,
-                itemDto.getName(),
-                itemDto.getDescription(),
-                itemDto.getAvailable(),
-                owner,
-                null
-        );
+        Item item = ItemMapper.toItem(itemDto, owner);
 
         return ItemMapper.toItemDto(itemRepository.save(item));
     }
@@ -41,11 +37,10 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
         Item item = itemRepository.findById(itemId);
-        if (item == null) {
-            throw new NotFoundException("Item not found");
-        }
+        chekItem(item);
 
         if (!item.getOwner().getId().equals(userId)) {
+            log.error("Not owner with id={}", item.getOwner().getId());
             throw new AccessDeniedException("Not owner");
         }
 
@@ -65,9 +60,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto getById(Long itemId) {
         Item item = itemRepository.findById(itemId);
-        if (item == null) {
-            throw new NotFoundException("Item not found");
-        }
+        chekItem(item);
 
         return ItemMapper.toItemDto(item);
     }
@@ -88,5 +81,12 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.search(text).stream()
                 .map(ItemMapper::toItemDto)
                 .toList();
+    }
+
+    private void chekItem(Item item) {
+        if (item == null) {
+            log.error("Item not found");
+            throw new NotFoundException("Item not found");
+        }
     }
 }

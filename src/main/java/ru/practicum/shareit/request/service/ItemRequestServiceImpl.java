@@ -1,6 +1,7 @@
 package ru.practicum.shareit.request.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.request.ItemRequest;
@@ -10,9 +11,9 @@ import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ItemRequestServiceImpl implements ItemRequestService {
@@ -23,23 +24,19 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemRequestDto create(Long userId, ItemRequestDto dto) {
         User user = userRepository.findById(userId);
         if (user == null) {
+            log.error("User not found");
             throw new NotFoundException("User not found");
         }
 
-        ItemRequest request = new ItemRequest(
-                null,
-                dto.getDescription(),
-                user,
-                LocalDateTime.now()
-        );
+        ItemRequest request = ItemRequestMapper.toItemRequest(dto, user);
 
-        return ItemRequestMapper.toDto(requestRepository.save(request));
+        return ItemRequestMapper.toItemRequestDto(requestRepository.save(request));
     }
 
     @Override
     public List<ItemRequestDto> getUserRequest(Long userId) {
         return requestRepository.findByRequestorId(userId).stream()
-                .map(ItemRequestMapper::toDto)
+                .map(ItemRequestMapper::toItemRequestDto)
                 .toList();
     }
 
@@ -47,7 +44,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public List<ItemRequestDto> getAllRequests(Long userId) {
         return requestRepository.findAll().stream()
                 .filter(request -> !request.getRequestor().getId().equals(userId))
-                .map(ItemRequestMapper::toDto)
+                .map(ItemRequestMapper::toItemRequestDto)
                 .toList();
     }
 
@@ -55,9 +52,10 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemRequestDto getById(Long userId, Long requestId) {
         ItemRequest request = requestRepository.findById(requestId);
         if (request == null) {
+            log.error("Request not found");
             throw new NotFoundException("Request not found");
         }
 
-        return ItemRequestMapper.toDto(request);
+        return ItemRequestMapper.toItemRequestDto(request);
     }
 }

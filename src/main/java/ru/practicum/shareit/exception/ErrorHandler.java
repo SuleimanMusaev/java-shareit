@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ErrorHandler {
-    @ExceptionHandler
+    @ExceptionHandler({ValidationException.class, MethodArgumentNotValidException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse validationException(final ValidationException e) {
+    public ErrorResponse handleBadRequest(final ValidationException e) {
         return new ErrorResponse("error " + e.getMessage());
     }
 
@@ -25,12 +25,6 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleAccess(AccessDeniedException e) {
         return new ErrorResponse("error" + e.getMessage());
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMethodArgumentNotValid(final MethodArgumentNotValidException e) {
-        return new ErrorResponse("Validation error: " + e.getMessage());
     }
 
     @ExceptionHandler
