@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -32,13 +32,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto update(Long userId, UserDto userDto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        checkUser(user);
+        User existing = userRepository.findById(userId);
+
+        checkUser(existing);
 
         if (userDto.getName() != null) {
-            user.setName(userDto.getName());
+            existing.setName(userDto.getName());
         }
 
         if (userDto.getEmail() != null) {
@@ -49,37 +49,31 @@ public class UserServiceImpl implements UserService {
                         throw new ConflictException("Email already exists");
                     });
 
-            user.setEmail(userDto.getEmail());
+            existing.setEmail(userDto.getEmail());
         }
 
-        return UserMapper.toUserDto(userRepository.save(user));
+        return UserMapper.toUserDto(userRepository.update(existing));
     }
 
     @Override
     public UserDto getById(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.warn("User not found: {}", userId);
-                    return new NotFoundException("User not found");
-                });
+        User user = userRepository.findById(userId);
+
+        checkUser(user);
 
         return UserMapper.toUserDto(user);
     }
 
     @Override
     public List<UserDto> getAll() {
-        return userRepository.findAll()
-                .stream()
+        return userRepository.findAll().stream()
                 .map(UserMapper::toUserDto)
                 .toList();
     }
 
     @Override
     public void delete(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new NotFoundException("User not found");
-        }
-        userRepository.deleteById(id);
+        userRepository.delete(id);
     }
 
     void checkUser(User user) {
