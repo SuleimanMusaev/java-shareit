@@ -16,6 +16,7 @@ target/
 ### IntelliJ IDEA ###
 *.class
 *.jar
+*.war
 .DS_Store
 .idea
 *.iws
