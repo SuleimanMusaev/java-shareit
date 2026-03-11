@@ -8,11 +8,10 @@ import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.mapper.ItemRequestMapper;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -23,11 +22,11 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public ItemRequestDto create(Long userId, ItemRequestDto dto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("User not found");
-                    return new NotFoundException("User not found");
-                });
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            log.error("User not found");
+            throw new NotFoundException("User not found");
+        }
 
         ItemRequest request = ItemRequestMapper.toItemRequest(dto, user);
 
@@ -51,8 +50,12 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public ItemRequestDto getById(Long userId, Long requestId) {
-        Optional<ItemRequest> request = requestRepository.findById(requestId);
+        ItemRequest request = requestRepository.findById(requestId);
+        if (request == null) {
+            log.error("Request not found");
+            throw new NotFoundException("Request not found");
+        }
 
-        return ItemRequestMapper.toItemRequestDto(request.orElse(null));
+        return ItemRequestMapper.toItemRequestDto(request);
     }
 }
